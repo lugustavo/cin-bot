@@ -1,0 +1,11 @@
+services:
+  cin-bot:
+    build: .
+    container_name: cin-bot
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro

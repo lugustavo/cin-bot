@@ -1,0 +1,14 @@
+{
+  "nome": "Maria da Silva Exemplo",
+  "cpf": "00000000000",
+  "cor_pele": "Branca",
+  "doador_orgaos": "Sim",
+  "telefone_pais": "PT (+351)",
+  "celular": "910000000",
+  "email": "maria.exemplo@example.com",
+  "logradouro": "Rua Exemplo, 1, 1.o Esq, Lisboa",
+  "frente": "certidao.pdf",
+  "verso": null,
+  "cin_material": "Cartão",
+  "cin_ativo": true
+}

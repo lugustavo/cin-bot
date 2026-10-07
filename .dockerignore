@@ -1,0 +1,7 @@
+.env
+.git
+data/
+config/
+__pycache__/
+*.pyc
+pin-teste.eml

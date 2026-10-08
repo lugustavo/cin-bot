@@ -128,7 +128,7 @@ def main():
         "burst_tz": os.environ.get("BURST_TZ", "Europe/Lisbon"),
         "burst_before": int(os.environ.get("BURST_BEFORE_MIN", "5")),
         "burst_after": int(os.environ.get("BURST_AFTER_MIN", "30")),
-        "burst_interval_s": int(os.environ.get("BURST_INTERVAL_S", "10")),
+        "burst_interval_s": int(os.environ.get("BURST_INTERVAL_S", "30")),
     }
     api.pick_index(1, cfg["urgency"])  # falha ja no arranque se a variavel for invalida
     log.info("cin-bot iniciado: %s", cfg)

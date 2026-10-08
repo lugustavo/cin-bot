@@ -70,7 +70,7 @@ Site alvo: <https://agendamento-pcdf-exterior.services-valid.com.br/>
 **Quando o site liberta vagas** (aviso na própria página `vagas-indisponiveis`, projeto piloto):
 **quintas-feiras às 16h, horário de Lisboa** e **sextas-feiras às 12h, horário de Assunção**.
 Fora disso o site costuma estar sem vagas. Por isso o bot consulta de **10 em 10 minutos** na
-maior parte do tempo e passa a **10 em 10 segundos** a volta da hora de libertação (das 15:55 às
+maior parte do tempo e passa a **30 em 30 segundos** a volta da hora de libertação (das 15:55 às
 16:30 de quinta, hora de Lisboa, por omissão). Ver `BURST_*` na secção 4.
 
 Salvaguardas:
@@ -217,7 +217,7 @@ Confirma sempre aqui que os valores são os que escreveste no `.env`. Esta linha
 | `BURST_TIME` | `16:00` | Hora da libertação, na zona `BURST_TZ`. |
 | `BURST_TZ` | `Europe/Lisbon` | Fuso da hora anterior (use `America/Asuncion` para as sextas 12:00 de Assunção). |
 | `BURST_BEFORE_MIN` / `BURST_AFTER_MIN` | `5` / `30` | Minutos antes e depois da hora em que a janela rápida está ativa. |
-| `BURST_INTERVAL_S` | `10` | Segundos entre consultas dentro da janela rápida. |
+| `BURST_INTERVAL_S` | `30` | Segundos entre consultas dentro da janela rápida. |
 | `IMAP_HOST` | `imap.gmail.com` | Servidor IMAP. |
 | `IMAP_USER` / `IMAP_PASSWORD` | – | Conta e app password. Sem elas, o PIN é pedido por Telegram. |
 | `PIN_TIMEOUT_S` | `240` | Segundos à espera do PIN por IMAP antes de recorrer ao Telegram. |

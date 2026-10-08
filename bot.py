@@ -30,6 +30,14 @@ SHOTS = DATA_DIR / "shots"
 STEP_TIMEOUT = 45_000
 
 
+class NoVacancies(Exception):
+    """O site mandou para /agendamento/vagas-indisponiveis (nao ha postos com vagas)."""
+
+
+class SlotUnavailable(Exception):
+    """O posto/dia/horario escolhido desapareceu entre a consulta e o clique."""
+
+
 def load_dados():
     return json.loads((CONFIG_DIR / "dados.json").read_text(encoding="utf-8"))
 
@@ -45,8 +53,9 @@ def shot(page, name):
     return str(path)
 
 
-def choose(page, combo, text):
-    """Abre um select Radix e escolhe a opcao cujo texto e exatamente 'text'."""
+def choose(page, combo, text, slot=False):
+    """Abre um select Radix e escolhe a opcao cujo texto e exatamente 'text'.
+    Com slot=True, opcao em falta = SlotUnavailable (alguem levou a vaga)."""
     combo.click()
     pattern = re.compile(rf"^\s*{re.escape(text)}\s*$")
     opt = page.locator('[role="option"]:visible').filter(has_text=pattern)
@@ -54,7 +63,22 @@ def choose(page, combo, text):
         opt.first.wait_for(timeout=30_000)
     except PWTimeout:
         opt = page.get_by_text(text, exact=True).locator("visible=true")
+        try:
+            opt.first.wait_for(timeout=3_000)
+        except PWTimeout:
+            if slot:
+                raise SlotUnavailable(f"opcao '{text}' nao existe na lista")
+            raise
     opt.first.click()
+
+
+def check_vacancies(page):
+    if "vagas-indisponiveis" in page.url:
+        try:
+            txt = re.sub(r"\s+", " ", page.locator("main").inner_text())[:200]
+        except Exception:
+            txt = ""
+        raise NoVacancies(txt)
 
 
 def type_into(page, selector, value):
@@ -75,22 +99,29 @@ def open_section(page, title):
 def step_inicio(page):
     page.goto(api.BASE + "/", wait_until="domcontentloaded", timeout=60_000)
     page.get_by_role("button", name="Agendar", exact=True).click()
-    page.wait_for_url("**/agendamento/localizacao", timeout=STEP_TIMEOUT)
+    page.wait_for_url(re.compile(r"/agendamento/(localizacao|vagas-indisponiveis)"), timeout=STEP_TIMEOUT)
+    check_vacancies(page)
 
 
 def step_posto(page, station_id):
     radio = page.locator(f'button[role="radio"][id="{station_id}"]')
-    radio.wait_for(timeout=STEP_TIMEOUT)
+    try:
+        radio.wait_for(timeout=20_000)
+    except PWTimeout:
+        check_vacancies(page)
+        raise SlotUnavailable(f"posto {station_id} ja nao esta na lista")
     radio.click()
     page.get_by_role("button", name="Continuar").click()
-    page.wait_for_url("**/agendamento/data-hora", timeout=STEP_TIMEOUT)
+    page.wait_for_url(re.compile(r"/agendamento/(data-hora|vagas-indisponiveis)"), timeout=STEP_TIMEOUT)
+    check_vacancies(page)
 
 
 def step_data_hora(page, date_value, time_str):
-    choose(page, page.get_by_role("combobox", name="Selecione o dia"), date_value)
-    choose(page, page.get_by_role("combobox", name="Selecione o horário"), time_str)
+    choose(page, page.get_by_role("combobox", name="Selecione o dia"), date_value, slot=True)
+    choose(page, page.get_by_role("combobox", name="Selecione o horário"), time_str, slot=True)
     page.get_by_role("button", name="Continuar").click()
-    page.wait_for_url("**/agendamento/dados-pessoais", timeout=STEP_TIMEOUT)
+    page.wait_for_url(re.compile(r"/agendamento/(dados-pessoais|vagas-indisponiveis)"), timeout=STEP_TIMEOUT)
+    check_vacancies(page)
 
 
 def step_dados(page, d):
@@ -209,6 +240,10 @@ def run(station, date_value, time_str, dry_run=True, confirm_final=True):
                 raise RuntimeError(f"Formulario nao avancou: {form_errors(page)}")
             step_pin(page, since)
             return step_revisao(page, confirm_final)
+        except (NoVacancies, SlotUnavailable) as e:
+            log.info("Sem vaga ao agendar (%s: %s)", type(e).__name__, e)
+            shot(page, "sem-vaga")
+            raise
         except Exception:
             img = shot(page, "erro")
             notify.send(f"<b>Falha no agendamento</b>\npasso em {page.url}", img)

@@ -23,7 +23,14 @@ _S.headers["Accept"] = "application/json"
 
 
 def _get(path):
+    """GET na API. Sem vagas o site responde 404 {"code":"NOT_FOUND",...}: devolve []."""
     r = _S.get(f"{BASE}/api/ex/availability{path}", timeout=30)
+    if r.status_code == 404:
+        try:
+            if r.json().get("code") == "NOT_FOUND":
+                return []
+        except ValueError:
+            pass
     r.raise_for_status()
     return r.json() if r.content else []
 

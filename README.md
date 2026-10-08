@@ -67,6 +67,12 @@ Site alvo: <https://agendamento-pcdf-exterior.services-valid.com.br/>
  Telegram: resultado + captura de ecrã   │   data/state.json: done = true
 ```
 
+**Quando o site liberta vagas** (aviso na própria página `vagas-indisponiveis`, projeto piloto):
+**quintas-feiras às 16h, horário de Lisboa** e **sextas-feiras às 12h, horário de Assunção**.
+Fora disso o site costuma estar sem vagas. Por isso o bot consulta de **10 em 10 minutos** na
+maior parte do tempo e passa a **10 em 10 segundos** a volta da hora de libertação (das 15:55 às
+16:30 de quinta, hora de Lisboa, por omissão). Ver `BURST_*` na secção 4.
+
 Salvaguardas:
 
 - **Nunca agenda duas vezes**: depois de um sucesso, `data/state.json` fica com `"done": true`.
@@ -74,6 +80,9 @@ Salvaguardas:
   email de PINs). Apagar `data/state.json` recomeça.
 - **Cada passo e cada erro** ficam em captura de ecrã em `data/shots/` (e as falhas vão ao Telegram).
 - Só conta um dia se tiver **vaga dentro da janela horária**; nunca escolhe um dia onde não pode marcar.
+- **Sem vagas não é falha**: se o site responde "não há postos com vagas" (API 404 ou página
+  `vagas-indisponiveis`) ou a vaga é levada por outra pessoa entre a consulta e o clique, o bot
+  não conta tentativa, não manda alerta de falha e volta a vigiar.
 
 ## 2. Requisitos
 
@@ -202,7 +211,13 @@ Confirma sempre aqui que os valores são os que escreveste no `.env`. Esta linha
 | `DRY_RUN` | `1` | `1` = preenche o formulário mas **não submete**. `0` = agenda a sério. |
 | `CONFIRM_FINAL` | `1` | `1` = carrega também no botão final da Revisão. `0` = pára na Revisão e manda captura. |
 | `WATCH_INTERVAL_MIN` | `10` | Minutos entre consultas (mais um jitter de até 60 s). |
-| `MAX_ATTEMPTS` | `3` | Tentativas falhadas antes de parar. |
+| `MAX_ATTEMPTS` | `3` | Tentativas falhadas antes de parar. Vagas que desaparecem **não** contam. |
+| `BURST` | `1` | `1` = vigilância rápida na janela de libertação de vagas; `0` = sempre ao ritmo normal. |
+| `BURST_DAY` | `3` | Dia da semana da libertação: `0`=segunda … `3`=quinta … `4`=sexta. |
+| `BURST_TIME` | `16:00` | Hora da libertação, na zona `BURST_TZ`. |
+| `BURST_TZ` | `Europe/Lisbon` | Fuso da hora anterior (use `America/Asuncion` para as sextas 12:00 de Assunção). |
+| `BURST_BEFORE_MIN` / `BURST_AFTER_MIN` | `5` / `30` | Minutos antes e depois da hora em que a janela rápida está ativa. |
+| `BURST_INTERVAL_S` | `10` | Segundos entre consultas dentro da janela rápida. |
 | `IMAP_HOST` | `imap.gmail.com` | Servidor IMAP. |
 | `IMAP_USER` / `IMAP_PASSWORD` | – | Conta e app password. Sem elas, o PIN é pedido por Telegram. |
 | `PIN_TIMEOUT_S` | `240` | Segundos à espera do PIN por IMAP antes de recorrer ao Telegram. |
@@ -275,7 +290,9 @@ Alertas que recebes por Telegram:
 
 | Sintoma | Causa provável e solução |
 |---|---|
-| `Posto 'Lisboa' ainda nao listado` | Normal enquanto o consulado não abre agenda. O bot continua a vigiar. |
+| `Posto 'Lisboa' nao listado (postos com vagas: nenhum)` | Normal fora da libertação semanal: o site está sem vagas. O bot continua a vigiar. |
+| `Sem vaga ao agendar (NoVacancies …)` | O site mostrou "Todas as vagas já foram preenchidas" ao clicar em Agendar. Não conta como falha. |
+| `Vaga desapareceu antes de agendar` | Outra pessoa levou o dia/horário entre a consulta e o clique. Volta a tentar com o que restar. |
 | Arranque mostra um valor diferente do que escreveste no `.env` | Linha repetida, erro de gravação ou ficheiro errado. Corre `grep -n NOME_DA_VARIAVEL .env` e deixa só uma linha. Reinicia e confere a linha `cin-bot iniciado`. |
 | `ValueError: DATE_URGENCY invalida` | Usa exatamente `MAX`, `MED` ou `MIN`. |
 | Telegram não recebe nada | Token ou chat id errados; no caso de canais, o bot tem de ser administrador. Teste: `python bot.py --city <Posto>` envia uma mensagem "Ensaio ok". |
@@ -322,6 +339,11 @@ cin-bot/
 
 - Frontend Next.js; páginas: `/` → `/agendamento/localizacao` → `/agendamento/data-hora` →
   `/agendamento/dados-pessoais` → verificação (PIN) → revisão.
+- **Sem vagas**: ao clicar em *Agendar* o site chama `GET /api/ex/availability` (204 = há vagas;
+  **404** = não há) e mostra `/agendamento/vagas-indisponiveis` ("Todas as vagas para atendimento
+  já foram preenchidas. Novas vagas são liberadas semanalmente: quintas às 16h (Lisboa), sextas às 12h
+  (Assunção)"). A API de leitura responde `404 {"code":"NOT_FOUND","message":"Não há postos com vagas
+  disponíveis."}` em `/stations`; o `api.py` trata isso como lista vazia.
 - API de leitura (sem autenticação): `GET /api/ex/availability/stations`,
   `/api/ex/availability/{posto}/dates`, `/api/ex/availability/{posto}/dates/{id}/timeslots`.
 - Os selects são componentes **Radix** (botão `role=combobox` + lista `role=option`); o posto é um

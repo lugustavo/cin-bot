@@ -1,6 +1,7 @@
 .env
 data/
-config/
+config/*
+!config/dados.example.json
 __pycache__/
 *.pyc
 pin-teste.eml

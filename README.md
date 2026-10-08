@@ -132,14 +132,19 @@ tempo, o bot **pergunta-te por Telegram** e preenche o que responderes.
 
 ### 3.4 Dados pessoais e anexo
 
-A pasta `config/` **não vai para o git** (tem dados pessoais). Cria-a a partir do exemplo:
+Os teus dados pessoais ficam em `config/` e **não vão para o git**: só o modelo
+`config/dados.example.json` (com dados fictícios) é versionado. Tal como no `.env`, copia o
+exemplo e edita a cópia:
 
 ```bash
-cp -r config.example config
+cp config/dados.example.json config/dados.json
 cp /caminho/da/tua/certidao.pdf config/certidao.pdf
+nano config/dados.json        # substitui os dados fictícios pelos teus
 ```
 
-Edita `config/dados.json`:
+O nome do anexo em `frente` (e `verso`) tem de coincidir com o ficheiro que puseste em `config/`.
+
+Campos de `config/dados.json`:
 
 | Campo | Significado | Valores aceites |
 |---|---|---|
@@ -304,7 +309,7 @@ Alertas que recebes por Telegram:
 
 ## 9. Segurança e privacidade
 
-- **Nunca** coloques no git: `.env`, `config/`, `data/` (tudo já está no `.gitignore`).
+- **Nunca** coloques no git: `.env`, `config/dados.json` e anexos, `data/` (tudo já está no `.gitignore`).
   Contêm o token do Telegram, a app password do Gmail, o teu CPF/morada, o documento e capturas
   com os teus dados.
 - O `.env` do servidor tem permissões `rw-rw-r--` por omissão; se a máquina for partilhada, aperta com
@@ -328,8 +333,10 @@ cin-bot/
 ├── docker-compose.yml  # serviço cin-bot; monta ./data e ./config
 ├── requirements.txt    # playwright, requests, python-dotenv
 ├── .env.example        # modelo do .env (copiar para .env)
-├── config.example/     # modelo de config/dados.json (dados fictícios)
-├── config/             # (NÃO versionado) dados.json + anexo (PDF)
+├── config/
+│   ├── dados.example.json  # modelo de dados.json (dados fictícios) — único ficheiro versionado aqui
+│   ├── dados.json          # (NÃO versionado) os teus dados
+│   └── certidao.pdf        # (NÃO versionado) o anexo
 └── data/               # (NÃO versionado) state.json, shots/ (capturas)
 ```
 

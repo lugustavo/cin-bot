@@ -132,9 +132,8 @@ tempo, o bot **pergunta-te por Telegram** e preenche o que responderes.
 
 ### 3.4 Dados pessoais e anexo
 
-Os teus dados pessoais ficam em `config/` e **não vão para o git**: só o modelo
-`config/dados.example.json` (com dados fictícios) é versionado. Tal como no `.env`, copia o
-exemplo e edita a cópia:
+Os teus dados pessoais ficam em `config/`, use o modelo
+`config/dados.example.json` para saber como preencher:
 
 ```bash
 cp config/dados.example.json config/dados.json

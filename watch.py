@@ -57,8 +57,11 @@ def tick(cfg, state):
 
     date_value, hhmm = found["date"]["value"], found["slot"]["startAt"]
     log.info("Vaga: %s %s (%s)", date_value, hhmm, st["name"])
-    notify.send(f"<b>Vaga em {st['city']}</b>: {date_value} as {hhmm}\n"
-                f"{'(ensaio, DRY_RUN=1)' if cfg['dry_run'] else 'a agendar...'}")
+    key = f"{st['id']}|{date_value}|{hhmm}"
+    if state.get("slot_notified") != key:  # nao repetir o aviso a cada tentativa rapida
+        state["slot_notified"] = key
+        notify.send(f"<b>Vaga em {st['city']}</b>: {date_value} as {hhmm}\n"
+                    f"{'(ensaio, DRY_RUN=1)' if cfg['dry_run'] else 'a agendar...'}")
     state["attempts"] += 1
     save_state(state)
     try:

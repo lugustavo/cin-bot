@@ -354,5 +354,9 @@ cin-bot/
 - O email do PIN vem de `noreply-plataforma@valid.com`, assunto *"Código de validação da
   solicitação"*, com 6 dígitos. O corpo vem marcado como `text/plain` mas é **HTML**, por isso o
   `pin.py` limpa sempre as tags, estilos e comentários antes de procurar o código.
-- Validado de ponta a ponta em 07/10/2026 com um agendamento real de teste (posto de Assunção),
-  depois cancelado. O posto de Lisboa ainda não existia na lista nessa data.
+- Páginas: verificação em `/agendamento/codigo-seguranca` (1 campo, botão **Validar e-mail**);
+  revisão com os botões *Confirmar agendamento* e *Alterar dados*; no fim, "Solicitação de
+  agendamento em análise".
+- Validado de ponta a ponta com um agendamento de teste em Assunção (07/10/2026, cancelado) e,
+  em produção, com um agendamento real em Lisboa na libertação de vagas de 08/10/2026
+  (da deteção à confirmação em cerca de 40 segundos).
